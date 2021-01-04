@@ -1,58 +1,57 @@
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 from numba import jit
+import draw_juliaset
 
 @jit
-def julia_calculate(zreal, zimag, zreal2, zimag2, cimag, creal, maxiter):
+def julia_calculate(z_real, z_imag, z_real2, z_imag2, c_imag, c_real, maxiter):
     n = 0
-    temp = zreal2 + zimag2
+    temp = z_real2 + z_imag2
     while (temp <= 4) and (n <= maxiter):
-          zimag = 2* zreal*zimag + cimag
-          zreal = zreal2 - zimag2 + creal
-          zreal2 = zreal*zreal
-          zimag2 = zimag*zimag
-          temp = zreal2 + zimag2
+          z_imag = 2* z_real*z_imag + c_imag
+          z_real = z_real2 - z_imag2 + c_real
+          z_real2 = z_real*z_real
+          z_imag2 = z_imag*z_imag
+          temp = z_real2 + z_imag2
           n = n + 1
     
     return n
 
 
 @jit
-def julia_numba(Y_size, X_size, creal, cimag, image, maxiter):
+def julia_numba(x_size, y_size, c_real, c_imag, image, maxiter):
     
-    h = 2.0/Y_size
-    for y in range(Y_size):
-        for x in range(X_size):
-            zreal = -2.0 + x*h
-            zimag = -1.0 + y*h          
+    h = 2.0/y_size
+    for y in range(y_size):
+        for x in range(x_size):
+            z_real = -2.0 + x*h
+            z_imag = -1.0 + y*h          
             image[y,x] = 0
-            zreal2 = zreal*zreal
-            zimag2 = zimag*zimag
-            image[y,x] = julia_calculate(zreal, zimag, zreal2, zimag2, cimag, creal, maxiter)
+            z_real2 = z_real*z_real
+            z_imag2 = z_imag*z_imag
+            image[y,x] = julia_calculate(z_real, z_imag, z_real2, z_imag2, c_imag, c_real, maxiter)
 
 
-#initialization of constants
-creal = -0.835
-cimag = - 0.2321
-Y_size = 2048
-X_size = 2* Y_size
-Z = np.zeros((Y_size, X_size), dtype=np.uint32)
-maxiter = 300
+def main():
+    #initialization of constants
+    c_real = -0.835
+    c_imag = - 0.2321
+    y_size = 2048
+    x_size = 2* y_size
+    image_box_xmin = -2
+    image_box_xmax = 0
+    image_box_ymin = 0
+    image_box_ymax = 1
+    image_array = np.zeros((y_size, x_size), dtype=np.uint32)
+    max_iterations = np.int64(300)
+    image_rectangle = np.array([image_box_xmin, image_box_xmax, image_box_ymin, image_box_ymax], dtype=np.float64)
+    image_size = np.array([x_size,y_size], dtype=np.int64)
 
-#start calculation
-start = time.time()
-julia_numba(Y_size, X_size, creal, cimag, Z, maxiter)
-dt = time.time() - start
+    start = time.time()
+    julia_numba(x_size, y_size, c_real, c_imag, image_array, max_iterations)
+    elapsed_time = time.time() - start
+    
+    draw_juliaset.plot_juliaset(image_rectangle, image_size, image_array, elapsed_time, max_iterations)
 
-
-
-#plot image in window
-plt.imshow(Z, cmap = plt.cm.prism)
-plt.xlabel("Re(c), using numba jit processing time: %f s" % dt)
-plt.ylabel("Im(c)")
-plt.title("julia set, image size (y,x): 2048 x 4096 pixels")
-plt.savefig("julia_set_optimize_numba_jit.png")
-plt.show()
-plt.close()
-
+if __name__ == "__main__":
+    main()
