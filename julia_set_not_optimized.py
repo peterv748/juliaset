@@ -12,7 +12,7 @@ def main():
     """
     main module
     """
-    
+
     complex_constant = np.array([-0.835, -0.2321], dtype=np.float64)
     y_size = 2048
     x_size = 2* y_size

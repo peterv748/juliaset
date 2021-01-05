@@ -4,18 +4,18 @@
 from numba import jit_module
 import numpy as np
 
-def juliaset_calculate(complex_number_1, complex_number_2, complex_constant, maxiter):
+def juliaset_calculate(cmplx_number_1, cmplx_number_2, cmplx_constant, maxiter):
     """
     calculation of julia set formula
     """
     count = 0
-    temp = complex_number_2[0] + complex_number_2[1]
+    temp = cmplx_number_2[0] + cmplx_number_2[1]
     while (temp <= 4) and (count <= maxiter):
-        complex_number_1[1] = 2* complex_number_1[0]*complex_number_1[1] + complex_constant[1]
-        complex_number_1[0] = complex_number_2[0] - complex_number_2[1] + complex_constant[0]
-        complex_number_2[0] = complex_number_1[0]*complex_number_1[0]
-        complex_number_2[1] = complex_number_1[1]*complex_number_1[1]
-        temp = complex_number_2[0] + complex_number_2[1]
+        cmplx_number_1[1] = 2* cmplx_number_1[0]*cmplx_number_1[1] + cmplx_constant[1]
+        cmplx_number_1[0] = cmplx_number_2[0] - cmplx_number_2[1] + cmplx_constant[0]
+        cmplx_number_2[0] = cmplx_number_1[0]*cmplx_number_1[0]
+        cmplx_number_2[1] = cmplx_number_1[1]*cmplx_number_1[1]
+        temp = cmplx_number_2[0] + cmplx_number_2[1]
         count = count + 1
     return count
 
@@ -33,4 +33,5 @@ if __name__ == "__main__":
     complex_number_1 = np.array([Z_REAL, Z_IMAG], dtype=np.float64)
     complex_number_2 = np.array([z_real2, z_imag2], dtype=np.float64)
 
-    print(juliaset_calculate(complex_number_1, complex_number_2, complex_constant, MAXIMUM_ITERATIONS))
+    print(juliaset_calculate(complex_number_1, complex_number_2, complex_constant, \
+                             MAXIMUM_ITERATIONS))
