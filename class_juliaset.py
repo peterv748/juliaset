@@ -30,13 +30,22 @@ class JuliaSet():
         calculate 2D image matrix containing the image of the juliaset
         """
         image = np.zeros((self.size_y_axis, self.size_x_axis))
-        h = 2.0/self.size_y_axis
-        for y in range(self.size_y_axis):
-            for x in range(self.size_x_axis):
-                z_real = -2.0 + x*h
-                z_imag = -1.0 + y*h
-                z_real2 = z_real*z_real
-                z_imag2 = z_imag*z_imag
-                image[y,x] = complex_calculation_juliaset.juliaset_calculate(z_real,\
-                         z_imag, z_real2, z_imag2, self.c_imag, self.c_real, self.max_iterations)
+        stepsize = 2.0/self.size_y_axis
+        complex_constant = np.array([self.c_real, self.c_imag], dtype=np.float64)
+        complex_number_1 = np.array([0.0, 0.0], dtype=np.float64)
+        complex_number_2 = np.array([0.0, 0.0], dtype=np.float64)
+        for j in range(self.size_y_axis):
+            for i in range(self.size_x_axis):
+                complex_number_1[0] = -2.0 + i*stepsize
+                complex_number_1[1] = -1.0 + j*stepsize
+                complex_number_2[0] = complex_number_1[0]*complex_number_1[0]
+                complex_number_2[1] = complex_number_1[1]*complex_number_1[1]
+                image[j,i] = complex_calculation_juliaset.juliaset_calculate(complex_number_1, \
+                         complex_number_2, complex_constant, self.max_iterations)
         return image
+
+    def julia_size (self):
+        """
+        to satisfy Py-lint
+        """
+        return self.size_x_axis, self.size_y_axis, self.c_real, self.c_imag

@@ -35,4 +35,4 @@ if __name__ == "__main__":
     y_axis_array = np.arange(image_rectangle[2], image_rectangle[3], stepsize_y)
     image_array = np.zeros((len(y_axis_array), len(x_axis_array)))
     TIME_ELAPSED = 10
-    plot_mandelbrot(image_rectangle, image_size, image_array, TIME_ELAPSED, MAXIMUM_ITERATIONS)
+    plot_juliaset(image_rectangle, image_size, image_array, TIME_ELAPSED, MAXIMUM_ITERATIONS)
