@@ -1,66 +1,68 @@
-import numpy as np
+"""
+Julia Set using the GPU
+"""
+
 import time
+import numpy as np
 import matplotlib.pyplot as plt
 from numba import cuda
+import draw_juliaset
+import complex_calculation_juliaset
 
-@cuda.jit (device=True)
-def julia_calculate(zreal, zimag, zreal2, zimag2, cimag, creal, maxiter):
-    temp = zreal2 + zimag2
-    n = 0
-    while (temp <= 4) and (n <= maxiter):
-          zimag = 2* zreal*zimag + cimag
-          zreal = zreal2 - zimag2 + creal
-          zreal2 = zreal*zreal
-          zimag2 = zimag*zimag
-          temp = zreal2 + zimag2
-          n = n + 1
-    
-    return n
 
 @cuda.jit
-def julia_numba_cuda_kernel(Y_size, X_size, creal, cimag, image, maxiter):
+def julia_numba_cuda_kernel(image_size, cpx_number_1, cpx_number_2, cp_constant, image, maxiter):
+    """
+    calculation and creation of 2D array with Julia set using GPU
+    """
+
+    stepsize = 2.0/image_size[1]
+
+    start_x = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
+    start_y = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
+    grid_x = cuda.gridDim.x * cuda.blockDim.x;
+    grid_y = cuda.gridDim.y * cuda.blockDim.y;
+  
     
+    for j in range(start_y, image_size[1], grid_y):
+        for i in range(start_x, image_size[0], grid_x):
+            cpx_number_1[0] = -2.0 + i*stepsize
+            cpx_number_1[1] = -1.0 + j*stepsize
+            cpx_number_2[0] = cpx_number_1[0]*cpx_number_1[0]
+            cpx_number_2[1] = cpx_number_1[1]*cpx_number_1[1]
+            image[j,i] = complex_calculation_juliaset.juliaset_calculate(cpx_number_1, cpx_number_2, \
+                                                                        cp_constant, maxiter)
+            
+def main():
+    """
+    main function for calculating and drawing Julia set
+    """
+
+    block_dim = (32,32)
+    grid_dim = (128,64)
+
+    complex_constant = np.array([-0.837, -0.2321], dtype=np.float64)
+    y_size = 2048
+    x_size = 2* y_size
+    max_iterations = np.int32(300)
+
+    image_rectangle = np.array([-2, 0, 0, 1], \
+                                dtype=np.float64)
+    image_size = np.array([x_size,y_size], dtype=np.int32)
+    image = np.zeros((y_size, x_size), dtype=np.int32)
+    image_processed = np.array((y_size, x_size), dtype=np.int32)
+    cpx_number_1 = np.array([0.0, 0.0], dtype=np.float64)
+    cpx_number_2 = np.array([0.0, 0.0], dtype=np.float64)
     
-    h = 2.0/Y_size
-    startX, startY = cuda.grid(2)
-    startX = cuda.blockDim.x * cuda.blockIdx.x + cuda.threadIdx.x
-    startY = cuda.blockDim.y * cuda.blockIdx.y + cuda.threadIdx.y
-    gridX = cuda.gridDim.x * cuda.blockDim.x;
-    gridY = cuda.gridDim.y * cuda.blockDim.y;
+    #start calculation
+    d_image = cuda.to_device(image)
+    start = time.time()
+    julia_numba_cuda_kernel[grid_dim, block_dim](image_size, cpx_number_1, cpx_number_2, \
+                            complex_constant, d_image, max_iterations)
+    delta_time = time.time() - start
+    image_processed = d_image.copy_to_host()
+    
+    draw_juliaset.plot_juliaset(image_rectangle,image_size, image_processed, delta_time, max_iterations)
 
-    for y in range(startY, Y_size, gridY):     
-        for x in range(startX, X_size, gridX):
-            zreal = -2.0 + x*h
-            zimag = -1.0 + y*h
-            image[y,x] = 0
-            zreal2 = zreal*zreal
-            zimag2 = zimag*zimag
-            image[y,x] = julia_calculate(zreal, zimag, zreal2, zimag2, cimag, creal, maxiter)      
-
-#initialization of constants
-creal = -0.837
-cimag = - 0.2321
-Y_size = 2048
-X_size = 2 * Y_size
-Z= np.zeros((Y_size, X_size), dtype=np.uint32)
-maxiter = 300
-blockdim = (32,32)
-griddim = (32,16)
-
-
-#start calculation
-d_image = cuda.to_device(Z)
-start = time.time()
-julia_numba_cuda_kernel[griddim, blockdim](Y_size, X_size, creal, cimag, d_image, maxiter)
-dt = time.time() - start
-A = d_image.copy_to_host()
-
-
-#plot image in window
-plt.imshow(A, cmap = plt.cm.prism)
-plt.xlabel("Re(c), using numba cuda gpu processing time: %f s" % dt)
-plt.ylabel("Im(c)")
-plt.title("julia set, image size (y,x): 2048 x 4096 pixels")
-plt.savefig("julia_set_optimize_cuda_gpu.png")
-plt.show()
-plt.close()
+if __name__ == "__main__":
+    main()
