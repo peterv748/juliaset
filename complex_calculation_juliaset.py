@@ -29,7 +29,7 @@ def juliaset_calculate_gpu(z_real_1, z_imag_1, z_real_2, z_imag_2, const_real, c
     temp_imag_1 = z_imag_1
     temp_real_2 = z_real_2
     temp_imag_2 = z_imag_2
-    
+
     while (temp <= 4) and (count <= maxiter):
         temp_imag_1 = 2* temp_real_1*temp_imag_1 + const_imag
         temp_real_1 = temp_real_2 - temp_imag_2 + const_real
@@ -55,4 +55,3 @@ if __name__ == "__main__":
 
     print(juliaset_calculate(complex_number_1, complex_number_2, complex_constant, \
                              MAXIMUM_ITERATIONS))
-    

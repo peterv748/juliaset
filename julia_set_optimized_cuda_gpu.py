@@ -25,7 +25,7 @@ def julia_numba_cuda_kernel(image_size, const_real, const_imag, image, maxiter):
     z_imag_1 = 0.0
     z_real_2 = 0.0
     z_imag_2 = 0.0
-    
+
     for j in range(start_y, image_size[1], grid_y):
         for i in range(start_x, image_size[0], grid_x):
             z_real_1 = -2.0 + i*stepsize
@@ -54,7 +54,7 @@ def main():
     image_size = np.array([x_size,y_size], dtype=np.int32)
     image = np.zeros((y_size, x_size), dtype=np.int32)
     image_processed = np.array((y_size, x_size), dtype=np.int32)
-    
+
     #start calculation
     d_image = cuda.to_device(image)
     start = time.time()
